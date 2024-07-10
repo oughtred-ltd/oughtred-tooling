@@ -1,0 +1,40 @@
+name: Archive old releases
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app.json'
+
+jobs:
+  prepare_and_execute_script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout current repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Fetch all history for all tags and branches
+
+    - name: Checkout Oughtred Tooling repository
+      uses: actions/checkout@v2
+      with:
+        repository: 'oughtred-ltd/oughtred-tooling'
+        path: 'oughtred-tooling'
+
+    - name: Move script to current repo root
+      run: mv oughtred-tooling/scripts/moveRelease.sh ./moveRelease.sh
+
+    - name: Make script executable
+      run: chmod +x moveRelease.sh
+
+    - name: Run script
+      run: ./moveRelease.sh
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git commit -m "Auto-update from moveRelease.sh" || echo "No changes to commit"
+        git push
