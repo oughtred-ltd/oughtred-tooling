@@ -1,5 +1,4 @@
 name: Archive old releases
-
 on:
   push:
     branches:
@@ -8,7 +7,7 @@ on:
       - 'app.json'
 
 jobs:
-  prepare_and_execute_script:
+  execute_script:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout current repo
@@ -16,20 +15,35 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all tags and branches
 
-    - name: Checkout Oughtred Tooling repository
-      uses: actions/checkout@v2
-      with:
-        repository: 'oughtred-ltd/oughtred-tooling'
-        path: 'oughtred-tooling'
+    - name: Execute embedded script
+      run: |
+        #!/bin/bash
 
-    - name: Move script to current repo root
-      run: mv oughtred-tooling/scripts/moveRelease.sh ./moveRelease.sh
+        # Directory to store past releases
+        PAST_RELEASES_DIR="PAST_RELEASES"
+        
+        # Create the directory if it does not exist
+        mkdir -p "$PAST_RELEASES_DIR"
+        
+        # Save the IFS (Internal Field Separator) and set it to newline only
+        OLD_IFS="$IFS"
+        IFS=$'\n'
 
-    - name: Make script executable
-      run: chmod +x moveRelease.sh
+        # Find all .app files in the root directory, sort them by modification time, and skip the newest
+        apps_to_move=($(ls -t *.app | tail -n +2))
 
-    - name: Run script
-      run: ./moveRelease.sh
+        # Check if there are any .app files to move
+        if [ "${#apps_to_move[@]}" -gt 0 ]; then
+            echo "Moving older .app files to $PAST_RELEASES_DIR..."
+            for app in "${apps_to_move[@]}"; do
+                mv "$app" "$PAST_RELEASES_DIR/"
+            done
+        else
+            echo "No old .app files to move."
+        fi
+        
+        # Restore the IFS
+        IFS="$OLD_IFS"
 
     - name: Commit and push changes
       run: |
