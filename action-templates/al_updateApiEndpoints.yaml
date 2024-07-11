@@ -33,3 +33,6 @@ jobs:
         git add API_ENDPOINTS.toml
         git commit -m "chore: update API Endpoints" || echo "No changes to commit"
         git push
+
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
