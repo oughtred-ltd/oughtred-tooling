@@ -1,0 +1,35 @@
+name: Update API Endpoints
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app.json'
+
+jobs:
+  update-endpoints:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'  # Specify your required Python version
+
+    - name: Install dependencies
+      run: python -m pip install git+https://github.com/oughtred-ltd/oughtred-tooling.git#subdirectory=tooling
+
+    - name: Run command to update API Endpoints
+      run: octool api parse [watever] -s API_ENDPOINTS.toml
+
+    - name: Commit and push if changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add API_ENDPOINTS.toml
+        git commit -m "chore: update API Endpoints" || echo "No changes to commit"
+        git push
