@@ -2,6 +2,7 @@ import os
 import pprint
 import click
 from oughtred_tooling.al_parser import process_directory, query_apis
+import toml
 
 @click.group()
 def cli():
@@ -14,8 +15,23 @@ def _group_api():
 @_group_api.command("parse")
 @click.argument('directory')
 @click.option("--save", "-s", default=None)
-def parse_api(directory, save):
-    process_directory(directory, save is None, save)
+@click.option("--append", "-a", default=False)
+@click.option("--print", "-p", default=False)
+def parse_api(directory, save, append, print):
+    res = process_directory(directory, print)
+
+    if not save:
+        return
+    
+    if append:
+        with open(save, 'r') as f:
+            existing = toml.load(f)
+            existing.update(res)
+    else:
+        existing = res
+
+    with open(save, 'w') as f:
+        toml.dump(existing, f)
 
 @_group_api.command("lookup")
 @click.argument('query')
